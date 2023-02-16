@@ -2817,3 +2817,13 @@
 6303	6581	6982599957927913	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/.bin_timestamp	ad8797a654c78e4a
 6581	6679	0	esp-idf/esptool_py/CMakeFiles/app_check_size	ee565f214a250c47
 6581	6679	0	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/esp-idf/esptool_py/CMakeFiles/app_check_size	ee565f214a250c47
+60	182	0	esp-idf/esptool_py/CMakeFiles/app_check_size	ee565f214a250c47
+60	182	0	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/esp-idf/esptool_py/CMakeFiles/app_check_size	ee565f214a250c47
+50	560	6980587848724742	bootloader-prefix/src/bootloader-stamp/bootloader-build	a493df1ecb248e67
+50	560	6980587848724742	bootloader/bootloader.elf	a493df1ecb248e67
+50	560	6980587848724742	bootloader/bootloader.bin	a493df1ecb248e67
+50	560	6980587848724742	bootloader/bootloader.map	a493df1ecb248e67
+50	560	6980587848724742	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/bootloader-prefix/src/bootloader-stamp/bootloader-build	a493df1ecb248e67
+50	560	6980587848724742	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/bootloader/bootloader.elf	a493df1ecb248e67
+50	560	6980587848724742	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/bootloader/bootloader.bin	a493df1ecb248e67
+50	560	6980587848724742	D:/My_Files/Career/Work/Quinproc/ESP_IDF/INMP_IIR/sample_project/build/bootloader/bootloader.map	a493df1ecb248e67
