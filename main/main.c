@@ -15,6 +15,7 @@
 #include "esp_system.h"
 #include <math.h>
 #include "esp_dsp.h"
+#include "WiFiHelper.h"
 
 i2s_chan_handle_t rx_handle;
 
@@ -118,6 +119,10 @@ void LPF(int16_t *inputBuffer) {
 
 void app_main(void) {
 
+    initNVS();
+
+    WiFiConnectHelper();
+
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
     i2s_new_channel(&rx_chan_cfg, NULL, &rx_handle);
 
@@ -142,6 +147,6 @@ void app_main(void) {
     };
     i2s_channel_init_std_mode(rx_handle, &rx_std_cfg);
     i2s_channel_enable(rx_handle);
-    xTaskCreate(readTask, "readTask", 65536, NULL, 5, NULL);
-    xTaskCreate(printTask, "printTask", 65536, NULL, 5, NULL);
+    // xTaskCreate(readTask, "readTask", 65536, NULL, 5, NULL);
+    // xTaskCreate(printTask, "printTask", 65536, NULL, 5, NULL);
 }
