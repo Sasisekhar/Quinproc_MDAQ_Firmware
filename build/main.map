@@ -14167,9 +14167,10 @@ LOAD c:/users/appus/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-e
                 0x00000000400d5ad4       0x67 esp-idf/main/libmain.a(main.c.obj)
                                          0x6f (size before relaxing)
  *fill*         0x00000000400d5b3b        0x1 
- .text.LPF      0x00000000400d5b3c       0xf4 esp-idf/main/libmain.a(main.c.obj)
-                                        0x110 (size before relaxing)
+ .text.LPF      0x00000000400d5b3c       0xf3 esp-idf/main/libmain.a(main.c.obj)
+                                        0x10f (size before relaxing)
                 0x00000000400d5b3c                LPF
+ *fill*         0x00000000400d5c2f        0x1 
  .text.printTask
                 0x00000000400d5c30       0x1f esp-idf/main/libmain.a(main.c.obj)
                                          0x23 (size before relaxing)
@@ -14923,6 +14924,7 @@ LOAD c:/users/appus/.espressif/tools/xtensa-esp32-elf/esp-2022r1-11.2.0/xtensa-e
  .text.vfs_include_syscalls_impl
                 0x00000000400e891c        0x5 esp-idf/vfs/libvfs.a(vfs.c.obj)
                 0x00000000400e891c                vfs_include_syscalls_impl
+ *fill*         0x00000000400e8921        0x0 
  *fill*         0x00000000400e8921        0x0 
  *fill*         0x00000000400e8921        0x0 
  *fill*         0x00000000400e8921        0x0 

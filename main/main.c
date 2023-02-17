@@ -111,13 +111,13 @@ void LPF(int16_t *inputBuffer) {
         return;
     }
 
-    for(int i = 0; i < 128; i++) {
+    for(int i = 0; i < 50; i++) {
         printf("%f\n", leftOutBuffer[i]);
     }
 }
 
 void app_main(void) {
-    
+
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
     i2s_new_channel(&rx_chan_cfg, NULL, &rx_handle);
 
