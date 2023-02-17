@@ -3,7 +3,11 @@
   "files.associations": {
     "freertos.h": "c",
     "i2s_std.h": "c",
-    "gpio.h": "c"
+    "gpio.h": "c",
+    "err.h": "c",
+    "bitset": "c",
+    "chrono": "c",
+    "algorithm": "c"
   },
   "idf.adapterTargetName": "esp32"
 }
