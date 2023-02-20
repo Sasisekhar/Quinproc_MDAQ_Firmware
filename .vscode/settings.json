@@ -9,5 +9,6 @@
     "chrono": "c",
     "algorithm": "c"
   },
-  "idf.adapterTargetName": "esp32"
+  "idf.adapterTargetName": "esp32",
+  "cmake.configureOnOpen": false
 }

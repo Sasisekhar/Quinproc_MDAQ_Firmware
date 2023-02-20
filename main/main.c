@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -13,26 +11,18 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include <math.h>
-#include "esp_dsp.h"
-#include "WiFiHelper.h"
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
-#include <lwip/netdb.h>
+#include "lwip/netdb.h"
+#include "WiFiHelper.h"
+#include "dspHelper.h"
 
 i2s_chan_handle_t rx_handle;
 
 QueueHandle_t buffQueue;
 
-#define N_SAMPLES 2048
-
-#define HOST_IP_ADDR "192.168.137.1"
-#define PORT 3333
-
-static const char *TAG = "UDP";
-
-void LPF(int16_t*);
+#define _SAMPLE_RATE 32000
 
 static void readTask (void *args) {
     int32_t raw_buf[N_SAMPLES];
@@ -40,7 +30,7 @@ static void readTask (void *args) {
     size_t r_bytes = 0;
     int samples_read = 0;
 
-    buffQueue = xQueueCreate(5, sizeof(output_buf));
+    buffQueue = xQueueCreate(2, sizeof(output_buf));
 
     while(1) {
         if(i2s_channel_read(rx_handle, raw_buf, sizeof(int32_t) * N_SAMPLES, &r_bytes, portMAX_DELAY) == ESP_OK) {
@@ -56,73 +46,40 @@ static void readTask (void *args) {
 
 static void printTask (void *args) {
     int16_t rxBuffer[N_SAMPLES];
-    int k = 0;
+    float rBuff[N_SAMPLES/2];
+    float lBuff[N_SAMPLES/2];
+    
     while(1) {
         if(buffQueue != 0) {
             if(xQueueReceive(buffQueue, &(rxBuffer), (TickType_t)10)){
-                // ESP_LOGI("printTask", "%d", rxBuffer[0]);
 
-                LPF(rxBuffer);
+                float* outputBuffer = (float*) calloc(N_SAMPLES, sizeof(float));
 
-                // if(k == 100) {
-                //     LPF(rxBuffer);
-                //     k = 0;
-                // } else {
-                //     k++;
-                // }
+                buffSplit(rxBuffer, lBuff, rBuff);
+                HPF(lBuff, rBuff, 30.0/_SAMPLE_RATE, 0.707);
+                LPF(lBuff, rBuff, 400.0/_SAMPLE_RATE, 0.707);
+                
+                int lcount = 0;
+                int rcount = 0;
+                for(int i = 0; i < N_SAMPLES; i++) {
+                    if(i < N_SAMPLES/2) {
+                        outputBuffer[i] = lBuff[lcount++];
+                    } else {
+                        outputBuffer[i] = rBuff[rcount++];
+                    }
+                }
+
+                int err = sendto(sock, outputBuffer, (N_SAMPLES) * sizeof(float), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+                if (err < 0) {
+                    ESP_LOGE(TAG_UDP, "Error occurred during sending: errno %d", errno);
+                }
+
+                free(outputBuffer);
+
+                vTaskDelay(10/portTICK_PERIOD_MS);
+
             }
         }
-    }
-}
-
-void LPF(int16_t *inputBuffer) {
-
-    float freq = 0.0625;
-    float qFactor = 1;
-
-    esp_err_t ret = ESP_OK;
-    float coeffs_lpf[5];
-    float w_lpf[5] = {0,0};
-
-    float leftInBuffer[N_SAMPLES/2];
-    float rightInBuffer[N_SAMPLES/2];
-
-    float leftOutBuffer[N_SAMPLES/2];
-    float rightOutBuffer[N_SAMPLES/2];
-
-    int k = 0;
-    //Preprocessing input signal
-    for(int i = 0; i < N_SAMPLES; i += 2) {
-        // leftInBuffer[k] = ((float)((inputBuffer[i] >> 8)*2)/8388608) - 1;
-        // rightInBuffer[k++] = ((float)((inputBuffer[i + 1] >> 8)*2)/8388608) - 1;
-
-        leftInBuffer[k] = (float)(inputBuffer[i]);
-        rightInBuffer[k++] = (float)(inputBuffer[i + 1]);
-    }
-    
-    // Calculate iir filter coefficients
-    ret = dsps_biquad_gen_lpf_f32(coeffs_lpf, freq, qFactor);
-    if (ret  != ESP_OK) {
-        ESP_LOGE("LPF", "Operation error = %i", ret);
-        return;
-    }
-
-    // Process input signals
-    //Left Channel
-    ret = dsps_biquad_f32_ae32(leftInBuffer, leftOutBuffer, N_SAMPLES/2, coeffs_lpf, w_lpf);
-    if (ret  != ESP_OK){
-        ESP_LOGE("LPF", "Operation error = %i", ret);
-        return;
-    }
-    //Right Channel
-    ret = dsps_biquad_f32_ae32(rightInBuffer, rightOutBuffer, N_SAMPLES/2, coeffs_lpf, w_lpf);
-    if (ret  != ESP_OK){
-        ESP_LOGE("LPF", "Operation error = %i", ret);
-        return;
-    }
-
-    for(int i = 0; i < 50; i++) {
-        printf("%f\n", leftOutBuffer[i]);
     }
 }
 
@@ -132,59 +89,23 @@ void app_main(void) {
 
     WiFiConnectHelper();
 
-    int addr_family = 0;
-    int ip_protocol = 0;
-    struct sockaddr_in dest_addr;
-    dest_addr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(PORT);
-    addr_family = AF_INET;
-    ip_protocol = IPPROTO_IP;
-
-    int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
-    if (sock < 0) {
-        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-    }
-
-    // Set timeout
-    // struct timeval timeout;
-    // timeout.tv_sec = 10;
-    // timeout.tv_usec = 0;
-    // setsockopt (sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
-
-    ESP_LOGI(TAG, "Socket created");
-
-    float *count_1 = (float*) calloc(1024, sizeof(float));;
-
-    for(int i = 0; i < 1024; i++) {
-        count_1[i] = 3.14;
-    }
-
-    while(1) {
-        int err = sendto(sock, count_1, 4096, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-        if (err < 0) {
-            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-            break;
-        }
-        
-        vTaskDelay(512 / portTICK_PERIOD_MS);
-    }
+    initUDP();
 
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
     i2s_new_channel(&rx_chan_cfg, NULL, &rx_handle);
 
     i2s_std_config_t rx_std_cfg = {
         .clk_cfg = {
-            .sample_rate_hz = 8000,
-            .mclk_multiple = 600,
+            .sample_rate_hz = _SAMPLE_RATE,
+            .mclk_multiple = 256,
         },
         .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_STEREO),
         .gpio_cfg = {
             .mclk = I2S_GPIO_UNUSED,
             .bclk = (gpio_num_t) 25,
-            .ws = (gpio_num_t) 26,
+            .ws = (gpio_num_t) 33,
             .dout = I2S_GPIO_UNUSED,
-            .din = (gpio_num_t) 32,
+            .din = (gpio_num_t) 34,
             .invert_flags = {
                 .mclk_inv = false,
                 .bclk_inv = false,
@@ -194,6 +115,6 @@ void app_main(void) {
     };
     i2s_channel_init_std_mode(rx_handle, &rx_std_cfg);
     i2s_channel_enable(rx_handle);
-    // xTaskCreate(readTask, "readTask", 65536, NULL, 5, NULL);
-    // xTaskCreate(printTask, "printTask", 65536, NULL, 5, NULL);
+    xTaskCreate(readTask, "readTask", 65536, NULL, 5, NULL);
+    xTaskCreate(printTask, "printTask", 65664, NULL, 5, NULL);
 }
