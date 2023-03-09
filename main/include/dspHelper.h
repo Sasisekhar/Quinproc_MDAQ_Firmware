@@ -128,8 +128,8 @@ void buffSplit(int16_t* buff, float* lBuffer, float* rBuffer) {
 
     int k = 0;
     for(int i = 0; i < N_SAMPLES; i += 2) {
-        lBuffer[k] = (float)(buff[i]);
-        rBuffer[k++] = (float)(buff[i + 1]);
+        lBuffer[k] = (buff[i]);
+        rBuffer[k++] = (buff[i + 1]);
     }
 
 }
